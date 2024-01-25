@@ -1,6 +1,6 @@
 # StableTasks.jl
 
-StableTasks is a simple package with one main API `SimpleTasks.@spawn` (not exported by default). 
+StableTasks is a simple package with one main API `StableTasks.@spawn` (not exported by default). 
 
 It works like `Threads.@spawn`, except it is *type stable* to `fetch` from (and it does not yet support threadpools
 other than the default threadpool).
