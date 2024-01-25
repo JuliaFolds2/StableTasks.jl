@@ -8,6 +8,7 @@ struct StableTask{T}
     ret::RefValue{T}
 end
 
+
 include("internals.jl")
 
 end # module StableTasks
