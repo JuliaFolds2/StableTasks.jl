@@ -28,9 +28,9 @@ Base.schedule(t, val; error=false) = (schedule(t.t, val; error); t)
 macro spawn(ex)
     tp = QuoteNode(:default)
 
-    letargs = Base._lift_one_interp!(ex)
+    letargs = _lift_one_interp!(ex)
 
-    thunk = Base.replace_linenums!(:(()->($(esc(ex)))), __source__)
+    thunk = replace_linenums!(:(()->($(esc(ex)))), __source__)
     var = esc(Base.sync_varname) # This is for the @sync macro which sets a local variable whose name is
                                  # the symbol bound to Base.sync_varname
                                  # I asked on slack and this is apparently safe to consider a public API
@@ -78,6 +78,27 @@ function _lift_one_interp_helper(expr::Expr, in_quote_context, letargs)
         expr.args[i] = _lift_one_interp_helper(e, in_quote_context, letargs)
     end
     expr
+end
+
+# Copied from base rather than calling it directly because who knows if it'll change in the future
+replace_linenums!(ex, ln::LineNumberNode) = ex
+function replace_linenums!(ex::Expr, ln::LineNumberNode)
+    if ex.head === :block || ex.head === :quote
+        # replace line number expressions from metadata (not argument literal or inert) position
+        map!(ex.args, ex.args) do @nospecialize(x)
+            isa(x, Expr) && x.head === :line && length(x.args) == 1 && return Expr(:line, ln.line)
+            isa(x, Expr) && x.head === :line && length(x.args) == 2 && return Expr(:line, ln.line, ln.file)
+            isa(x, LineNumberNode) && return ln
+            return x
+        end
+    end
+    # preserve any linenums inside `esc(...)` guards
+    if ex.head !== :escape
+        for subex in ex.args
+            subex isa Expr && replace_linenums!(subex, ln)
+        end
+    end
+    return ex
 end
 
 end # module Internals
