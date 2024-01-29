@@ -1,6 +1,7 @@
 module StableTasks
 
 macro spawn end
+macro spawnat end
 
 using Base: RefValue
 struct StableTask{T}

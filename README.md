@@ -15,3 +15,12 @@ versus
 julia> Core.Compiler.return_type(() -> fetch(Threads.@spawn 1 + 1), Tuple{})
 Any
 ```
+
+The package also provides `StableTasks.@spawnat` (not exported), which is similar to `StableTasks.@spawn` but creates a *sticky* task (it won't migrate) on a specific thread.
+
+```julia
+julia> t = StableTasks.@spawnat 4 Threads.threadid();
+
+julia> fetch(t)
+4
+```

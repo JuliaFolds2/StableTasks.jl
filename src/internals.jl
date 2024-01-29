@@ -1,6 +1,6 @@
-module Internals 
+module Internals
 
-import StableTasks: @spawn, StableTask
+import StableTasks: @spawn, @spawnat, StableTask
 
 function Base.fetch(t::StableTask{T}) where {T}
     fetch(t.t)
@@ -26,14 +26,12 @@ Base.schedule(t, val; error=false) = (schedule(t.t, val; error); t)
 
 
 macro spawn(ex)
-    tp = QuoteNode(:default)
-
     letargs = _lift_one_interp!(ex)
 
-    thunk = replace_linenums!(:(()->($(esc(ex)))), __source__)
+    thunk = replace_linenums!(:(() -> ($(esc(ex)))), __source__)
     var = esc(Base.sync_varname) # This is for the @sync macro which sets a local variable whose name is
-                                 # the symbol bound to Base.sync_varname
-                                 # I asked on slack and this is apparently safe to consider a public API
+    # the symbol bound to Base.sync_varname
+    # I asked on slack and this is apparently safe to consider a public API
     quote
         let $(letargs...)
             f = $thunk
@@ -51,6 +49,39 @@ macro spawn(ex)
     end
 end
 
+macro spawnat(thrdid, ex)
+    letargs = _lift_one_interp!(ex)
+
+    thunk = replace_linenums!(:(() -> ($(esc(ex)))), __source__)
+    var = esc(Base.sync_varname)
+
+    tid = esc(thrdid)
+    @static if VERSION < v"1.9"
+        nt = :(Threads.nthreads())
+    else
+        nt = :(Threads.maxthreadid())
+    end
+    quote
+        if $tid < 1 || $tid > $nt
+            throw(ArgumentError("Invalid thread id ($($tid)). Must be between in " *
+                                "1:(total number of threads), i.e. $(1:$nt)."))
+        end
+        let $(letargs...)
+            thunk = $thunk
+            RT = Core.Compiler.return_type(thunk, Tuple{})
+            ret = Ref{RT}()
+            thunk_wrap = () -> (ret[] = thunk(); nothing)
+            local task = Task(thunk_wrap)
+            task.sticky = true
+            ccall(:jl_set_task_tid, Cvoid, (Any, Cint), task, $tid - 1)
+            if $(Expr(:islocal, var))
+                put!($var, task)
+            end
+            schedule(task)
+            StableTask(task, ret)
+        end
+    end
+end
 
 # Copied from base rather than calling it directly because who knows if it'll change in the future
 function _lift_one_interp!(e)
@@ -74,7 +105,7 @@ function _lift_one_interp_helper(expr::Expr, in_quote_context, letargs)
     elseif expr.head === :macrocall
         return expr  # Don't recur into macro calls, since some other macros use $
     end
-    for (i,e) in enumerate(expr.args)
+    for (i, e) in enumerate(expr.args)
         expr.args[i] = _lift_one_interp_helper(e, in_quote_context, letargs)
     end
     expr
