@@ -32,6 +32,11 @@ macro spawn(ex)
     var = esc(Base.sync_varname) # This is for the @sync macro which sets a local variable whose name is
     # the symbol bound to Base.sync_varname
     # I asked on slack and this is apparently safe to consider a public API
+    set_pool = if VERSION < v"1.9"
+        nothing
+    else
+        :(Threads._spawn_set_thrpool(task, :default))
+    end
     quote
         let $(letargs...)
             f = $thunk
@@ -40,6 +45,7 @@ macro spawn(ex)
             f_wrap = () -> (ref[] = f(); nothing)
             task = Task(f_wrap)
             task.sticky = false
+            $set_pool
             if $(Expr(:islocal, var))
                 put!($var, task) # Sync will set up a Channel, and we want our task to be in there.
             end
