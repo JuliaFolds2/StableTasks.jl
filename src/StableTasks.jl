@@ -10,8 +10,8 @@ mutable struct AtomicRef{T}
     AtomicRef{T}(x) where {T} = new{T}(convert(T, x))
 end
 
-mutable struct StableTask{T}
-    const t::Task
+struct StableTask{T}
+    t::Task
     ret::AtomicRef{T}
 end
 
