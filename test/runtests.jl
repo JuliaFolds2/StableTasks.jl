@@ -6,6 +6,15 @@ using StableTasks: @spawn, @spawnat
     t = @eval @spawn inv([1 2 ; 3 4])
     @test inv([1 2 ; 3 4]) == @inferred fetch(t)
 
+    @test 2 == @inferred fetch(@spawn :interactive 1 + 1)
+    t = @eval @spawn :interactive inv([1 2 ; 3 4])
+    @test inv([1 2 ; 3 4]) == @inferred fetch(t)
+
+    s = :default
+    @test 2 == @inferred fetch(@spawn s 1 + 1)
+    t = @eval @spawn $(QuoteNode(s)) inv([1 2 ; 3 4])
+    @test inv([1 2 ; 3 4]) == @inferred fetch(t)
+
     @test 2 == @inferred fetch(@spawnat 1 1 + 1)
     t = @eval @spawnat 1 inv([1 2 ; 3 4])
     @test inv([1 2 ; 3 4]) == @inferred fetch(t)
