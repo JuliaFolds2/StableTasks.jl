@@ -27,7 +27,9 @@ end
 Base.schedule(t::StableTask) = (schedule(t.t); t)
 Base.schedule(t, val; error=false) = (schedule(t.t, val; error); t)
 
-
+"""
+Similar to `Threads.@spawn` but type-stable. Creates a `Task` and schedules it to run on any available thread in the `:default` threadpool.
+"""
 macro spawn(args...)
     tp = QuoteNode(:default)
     na = length(args)
@@ -47,6 +49,7 @@ macro spawn(args...)
     else
         throw(ArgumentError("wrong number of arguments in @spawn"))
     end
+
     letargs = _lift_one_interp!(ex)
 
     thunk = replace_linenums!(:(() -> ($(esc(ex)))), __source__)
@@ -71,6 +74,10 @@ macro spawn(args...)
     end
 end
 
+"""
+Similar to `StableTasks.@spawn` but creates a **sticky** `Task` and schedules it to run on the thread with the given id (`thrdid`).
+The task is guaranteed to stay on this thread (it won't migrate to another thread). 
+"""
 macro spawnat(thrdid, ex)
     letargs = _lift_one_interp!(ex)
 
