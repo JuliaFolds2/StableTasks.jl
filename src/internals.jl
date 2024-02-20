@@ -1,6 +1,6 @@
 module Internals
 
-import StableTasks: @spawn, @spawnat, StableTask, AtomicRef
+import StableTasks: @spawn, @spawnat, @fetch, @fetchfrom, StableTask, AtomicRef
 
 Base.getindex(r::AtomicRef) = @atomic r.x
 Base.setindex!(r::AtomicRef{T}, x) where {T} = @atomic r.x = convert(T, x)
