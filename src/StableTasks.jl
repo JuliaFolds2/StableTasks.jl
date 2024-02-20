@@ -2,6 +2,8 @@ module StableTasks
 
 macro spawn end
 macro spawnat end
+macro fetch end
+macro fetchfrom end
 
 mutable struct AtomicRef{T}
     @atomic x::T
