@@ -117,6 +117,24 @@ macro spawnat(thrdid, ex)
     end
 end
 
+"""
+    @fetch ex
+
+Shortcut for `fetch(@spawn(ex))`.
+"""
+macro fetch(ex)
+    :(fetch(@spawn($(esc(ex)))))
+end
+
+"""
+    @fetchfrom thrdid ex
+
+Shortcut for `fetch(@spawnat(thrdid, ex))`.
+"""
+macro fetchfrom(thrdid, ex)
+    :(fetch(@spawnat($(esc(thrdid)), $(esc(ex)))))
+end
+
 # Copied from base rather than calling it directly because who knows if it'll change in the future
 function _lift_one_interp!(e)
     letargs = Any[]  # store the new gensymed arguments
