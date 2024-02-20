@@ -1,5 +1,5 @@
 using Test, StableTasks
-using StableTasks: @spawn, @spawnat
+using StableTasks: @spawn, @spawnat, @fetch, @fetchfrom
 
 @testset "Type stability" begin
     @test 2 == @inferred fetch(@spawn 1 + 1)
@@ -51,4 +51,7 @@ end
         @test r[] == 0
     end
     @test r[] == 1
+
+    @test @fetch(3+3) == 6
+    @test @fetchfrom(1, Threads.threadid()) == 1
 end
