@@ -30,3 +30,13 @@ julia> t = StableTasks.@spawnat 4 Threads.threadid();
 julia> @inferred fetch(t)
 4
 ```
+
+For convenience, and similar to at Distributed.jl, there are also `@fetch` and `@fetchfrom` macros:
+
+```julia
+julia> StableTasks.@fetch 3+3
+6
+
+julia> StableTasks.@fetchfrom 2 Threads.threadid()
+2
+```
