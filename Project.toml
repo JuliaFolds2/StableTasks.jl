@@ -1,7 +1,7 @@
 name = "StableTasks"
 uuid = "91464d47-22a1-43fe-8b7f-2d57ee82463f"
 authors = ["Mason Protter <mason.protter@icloud.com>"]
-version = "0.1.4"
+version = "0.1.5"
 
 [compat]
 julia = "1.9"
