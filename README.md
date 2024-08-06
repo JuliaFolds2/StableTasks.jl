@@ -42,7 +42,7 @@ julia> @inferred fetch(t)
 
 ## `StableTasks.@fetch` and `StableTasks.@fetchfrom`
 
-For convenience, and similar to at Distributed.jl, we also provide `@fetch` and `@fetchfrom` macros:
+For convenience, and in analogy to at Distributed.jl, we also provide `@fetch` and `@fetchfrom` macros:
 
 ```julia
 julia> StableTasks.@fetch 3+3
