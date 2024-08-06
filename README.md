@@ -1,6 +1,6 @@
 # StableTasks.jl
 
-StableTasks is a simple package that provides *type stable* tools for creating (regular and *sticky*) tasks. It has the following API (no exports):
+StableTasks is a simple package that provides *type stable* tools for creating (regular and *sticky*) tasks. It has the following API (not exported):
 
 * `StableTasks.@spawn`
 * `StableTasks.@spawnat`
