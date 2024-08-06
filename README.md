@@ -1,6 +1,13 @@
 # StableTasks.jl
 
-StableTasks is a simple package with one main API `StableTasks.@spawn` (not exported by default). 
+StableTasks is a simple package that provides *type stable* tools for creating (regular and *sticky*) tasks. It has the following API (no exports):
+
+* `StableTasks.@spawn`
+* `StableTasks.@spawnat`
+* `StableTasks.@fetch`
+* `StableTasks.@fetchfrom`
+
+## `StableTasks.@spawn`
 
 It works like `Threads.@spawn`, except it is *type stable* to `fetch` from.
 
@@ -22,7 +29,9 @@ Stacktrace:
    @ REPL[3]:1
 ```
 
-The package also provides `StableTasks.@spawnat` (not exported), which is similar to `StableTasks.@spawn` but creates a *sticky* task (it won't migrate) on a specific thread.
+## `StableTasks.@spawnat`
+
+The package also provides `StableTasks.@spawnat`, which is similar to `StableTasks.@spawn` but creates a *sticky* task (that won't migrate) on a specific thread.
 
 ```julia
 julia> t = StableTasks.@spawnat 4 Threads.threadid();
@@ -31,7 +40,9 @@ julia> @inferred fetch(t)
 4
 ```
 
-For convenience, and similar to at Distributed.jl, there are also `@fetch` and `@fetchfrom` macros:
+## `StableTasks.@fetch` and `StableTasks.@fetchfrom`
+
+For convenience, and similar to at Distributed.jl, we also provide `@fetch` and `@fetchfrom` macros:
 
 ```julia
 julia> StableTasks.@fetch 3+3
