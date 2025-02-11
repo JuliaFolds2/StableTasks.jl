@@ -28,6 +28,40 @@ Base.schedule(t::StableTask) = (schedule(t.t); t)
 Base.schedule(t, val; error=false) = (schedule(t.t, val; error); t)
 
 """
+    set_task_tid!(task::Task, tid::Integer)
+
+Sets the thread ID of `task` to `tid`.  Retries up to 10 times in case 
+the ccall fails.
+
+Calls `jl_set_task_tid` internally.
+
+## Extended help
+
+Copied from [Dagger.jl](https://github.com/JuliaParallel/Dagger.jl/blob/62f8307a46436bfed1f12414b812a776147a6851/src/utils/tasks.jl#L1),
+credit to Julian Samaroo for the implementation and for letting us know about this!
+"""
+function set_task_tid!(task::Task, tid::Integer)
+    task.sticky = true
+    ctr = 0
+    while true
+        ret = ccall(:jl_set_task_tid, Cint, (Any, Cint), task, tid-1)
+        if ret == 1
+            break
+        elseif ret == 0
+            yield()
+        else
+            error("Unexpected retcode from jl_set_task_tid: $ret")
+        end
+        ctr += 1
+        if ctr > 10
+            @warn "Setting task TID to $tid failed, giving up!"
+            return
+        end
+    end
+    @assert Threads.threadid(task) == tid "jl_set_task_tid failed!"
+end
+
+"""
     @spawn [:default|:interactive] expr
 
 Similar to `Threads.@spawn` but type-stable. Creates a `Task` and schedules it to run on any available
@@ -107,7 +141,7 @@ macro spawnat(thrdid, ex)
             thunk_wrap = () -> (ret[] = thunk(); nothing)
             local task = Task(thunk_wrap)
             task.sticky = true
-            ccall(:jl_set_task_tid, Cvoid, (Any, Cint), task, $tid - 1)
+            set_task_tid!(task, $tid)
             if $(Expr(:islocal, var))
                 put!($var, task)
             end
