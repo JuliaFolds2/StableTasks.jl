@@ -29,6 +29,13 @@ Stacktrace:
    @ REPL[3]:1
 ```
 
+Note regarding the return type of `@spawn`:
+* `Threads.@spawn` returns a value of the concrete type `Task`
+* In contrast, the return type of `StableTasks.@spawn` may depend on any and all of the following:
+    * the configuration of type inference in the Julia compiler
+    * the return type of the input function
+        * in particular, `typeof(StableTasks.@spawn 3) != typeof(StableTasks.@spawn 3.0)`, because `typeof(3) !== typeof(3.0)`
+
 ## `StableTasks.@spawnat`
 
 The package also provides `StableTasks.@spawnat`, which is similar to `StableTasks.@spawn` but creates a *sticky* task (that won't migrate) on a specific thread.
@@ -39,6 +46,8 @@ julia> t = StableTasks.@spawnat 4 Threads.threadid();
 julia> @inferred fetch(t)
 4
 ```
+
+The note regarding the return type of `@spawn` also applies here.
 
 ## `StableTasks.@fetch` and `StableTasks.@fetchfrom`
 
