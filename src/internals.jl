@@ -2,14 +2,7 @@ module Internals
 
 import StableTasks: @spawn, @spawnat, @fetch, @fetchfrom, StableTask, AtomicRef
 
-# * use `Base.infer_return_type` in preference to `Core.Compiler.return_type`
-# * safe conservative fallback to `Any`, which is subtyped by each type
 if (
-    isdefined(Base, :infer_return_type) &&
-    applicable(Base.infer_return_type, identity, Tuple{})
-)
-    infer_return_type(@nospecialize f::Any) = Base.infer_return_type(f, Tuple{})
-elseif (
     (@isdefined Core) &&
     (Core isa Module) &&
     isdefined(Core, :Compiler) &&
@@ -19,6 +12,7 @@ elseif (
 )
     infer_return_type(@nospecialize f::Any) = Core.Compiler.return_type(f, Tuple{})
 else
+    # safe conservative fallback to `Any`, which is subtyped by each type
     infer_return_type(@nospecialize f::Any) = Any
 end
 
