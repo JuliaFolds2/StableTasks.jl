@@ -2,6 +2,26 @@ module Internals
 
 import StableTasks: @spawn, @spawnat, @fetch, @fetchfrom, StableTask, AtomicRef
 
+# * use `Base.infer_return_type` in preference to `Core.Compiler.return_type`
+# * safe conservative fallback to `Any`, which is subtyped by each type
+if (
+    isdefined(Base, :infer_return_type) &&
+    applicable(Base.infer_return_type, identity, Tuple{})
+)
+    infer_return_type(@nospecialize f::Any) = Base.infer_return_type(f, Tuple{})
+elseif (
+    (@isdefined Core) &&
+    (Core isa Module) &&
+    isdefined(Core, :Compiler) &&
+    (Core.Compiler isa Module) &&
+    isdefined(Core.Compiler, :return_type) &&
+    applicable(Core.Compiler.return_type, identity, Tuple{})
+)
+    infer_return_type(@nospecialize f::Any) = Core.Compiler.return_type(f, Tuple{})
+else
+    infer_return_type(@nospecialize f::Any) = Any
+end
+
 Base.getindex(r::AtomicRef) = @atomic r.x
 Base.setindex!(r::AtomicRef{T}, x) where {T} = @atomic r.x = convert(T, x)
 
@@ -96,7 +116,7 @@ macro spawn(args...)
     quote
         let $(letargs...)
             f = $thunk
-            T = Core.Compiler.return_type(f, Tuple{})
+            T = infer_return_type(f)
             ref = AtomicRef{T}()
             f_wrap = () -> (ref[] = f(); nothing)
             task = Task(f_wrap)
@@ -136,7 +156,7 @@ macro spawnat(thrdid, ex)
         end
         let $(letargs...)
             thunk = $thunk
-            RT = Core.Compiler.return_type(thunk, Tuple{})
+            RT = infer_return_type(thunk)
             ret = AtomicRef{RT}()
             thunk_wrap = () -> (ret[] = thunk(); nothing)
             local task = Task(thunk_wrap)
