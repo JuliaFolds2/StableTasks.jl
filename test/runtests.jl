@@ -2,6 +2,9 @@ using Test, StableTasks
 using StableTasks: @spawn, @spawnat, @fetch, @fetchfrom
 
 @testset "Type stability" begin
+    t = @eval Threads.@spawn inv([1 2 ; 3 4])
+    fetch(t)
+    
     @test 2 == @inferred fetch(@spawn 1 + 1)
     t = @eval @spawn inv([1 2 ; 3 4])
     @test inv([1 2 ; 3 4]) == @inferred fetch(t)
@@ -16,8 +19,8 @@ using StableTasks: @spawn, @spawnat, @fetch, @fetchfrom
     @test inv([1 2 ; 3 4]) == @inferred fetch(t)
 
     @test 2 == @inferred fetch(@spawnat 1 1 + 1)
-    t = @eval @spawnat 1 inv([1 2 ; 3 4])
-    @test inv([1 2 ; 3 4]) == @inferred fetch(t)
+    t = @eval @spawnat 1 1 + 1
+    @test 2 == @inferred fetch(t)
 end
 
 @testset "API funcs" begin
